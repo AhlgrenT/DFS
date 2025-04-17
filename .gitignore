@@ -1,6 +1,3 @@
 build/
-*.o
-*.out
-*.log
-*.swp
-
+bin/
+.vscode
