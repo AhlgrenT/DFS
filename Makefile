@@ -1,40 +1,74 @@
-# Compiler & flags
-CXX = g++
-CXXFLAGS = -Wall -g -std=c++17 -MMD -MP
+# Compiler and flags
+CXX := g++ -std=c++17 -Wall -Wextra
 
-# Directories
-SRC_DIR = src
-BUILD_DIR = build
-BIN_DIR = bin
 
-# Source files (recursively find all .cpp files)
-SRC = $(shell find $(SRC_DIR) -name "*.cpp")
+BIN_DIR := ./bin
+BUILD_DIR := ./build
+SRC_DIR := ./src
 
-# Generate matching .o paths by replacing src/ with build/
-OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRC))
+################# Setup #################
+#dirs
+MASTER := $(BIN_DIR)/master
+SLAVE := $(BIN_DIR)/slave
+CLIENT := $(BIN_DIR)/client
 
-# Final executable
-TARGET = $(BIN_DIR)/DFS
+# Find all .cpp files
+SRC_MASTER := $(shell find $(SRC_DIR)/master -name '*.cpp')
+SRC_SLAVE := $(shell find $(SRC_DIR)/slave -name '*.cpp')
+SRC_CLIENT := $(shell find $(SRC_DIR)/client -name '*.cpp')
 
-# Default target
-all: $(TARGET)
+# Object files
+OBJ_MASTER := $(patsubst $(SRC_DIR)/master/%.cpp, $(BUILD_DIR)/master/%.o, $(SRC_MASTER))
+OBJ_SLAVE := $(patsubst $(SRC_DIR)/slave/%.cpp, $(BUILD_DIR)/slave/%.o, $(SRC_SLAVE))
+OBJ_CLIENT := $(patsubst $(SRC_DIR)/client/%.cpp, $(BUILD_DIR)/client/%.o, $(SRC_CLIENT))
 
-# Link all .o files into the binary
-$(TARGET): $(OBJS)
-	@echo "Linking..."
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+################## Targets ######################
+.PHONY: all
+all: master slave client
 
-# Compile each .cpp to a .o, mirroring folder structure
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+.PHONY: master
+master: $(MASTER)
+
+.PHONE: slave
+slave:  $(SLAVE)
+
+.PHONY: client
+client: $(CLIENT)
+
+################## Linking #####################
+$(MASTER): $(OBJ_MASTER)
+	@echo "Linking $(MASTER)..."
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(SLAVE): $(OBJ_SLAVE)
+	@echo "Linking $(SLAVE)..."
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+$(CLIENT): $(OBJ_CLIENT)
+	@echo "Linking $(CLIENT)..."
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+################# Compiling #####################
+
+$(BUILD_DIR)/master/%.o: $(SRC_DIR)/master/%.cpp
 	@echo "Compiling $<..."
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean up
-clean:
-	find $(BUILD_DIR) -type f \( -name '*.o' -o -name '*.d' \) -delete
-	find $(BIN_DIR) -type f -delete
+$(BUILD_DIR)/slave/%.o: $(SRC_DIR)/slave/%.cpp
+	@echo "Compiling $<..."
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/client/%.o: $(SRC_DIR)/client/%.cpp
+	@echo "Compiling $<..."
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: all clean
+clean: 
+	rm -rf $(BIN_DIR)/*
+	rm -rf $(BUILD_DIR)/*
+
