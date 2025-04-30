@@ -12,7 +12,7 @@
 int main() {
     int sock = 0;
     struct sockaddr_in serv_addr;
-    const char* msg = "Hello from client";
+    const char* msg = "CLIENT";
     char buffer[1024] = {0};
 
     // Create socket

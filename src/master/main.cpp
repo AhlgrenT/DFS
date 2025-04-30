@@ -7,15 +7,18 @@
 #define PORT 9000
 
 void handle_client(int client_socket) {
-    char buffer[1024] = {0};
-    int valread = read(client_socket, buffer, 1024);
-    if (valread > 0) {
-        std::cout << "[MASTER] Received: " << buffer << std::endl;
+    sleep(1);
 
-        std::string response = "Hello from master";
-        send(client_socket, response.c_str(), response.size(), 0);
-        std::cout << "[MASTER] Response sent\n";
+    int32_t connection_id;
+    ssize_t bytesRead = read(client_socket, &connection_id, sizeof(connection_id));  // Read 4 bytes
+
+    if (bytesRead != sizeof(connection_id)) {
+        std::cerr << "Error: incomplete read\n";
+        close(client_socket);
+        return;
     }
+
+    std::cout << "Slave connected with ID: " << connection_id << std::endl;
 
     close(client_socket);
 }
@@ -65,7 +68,31 @@ int main() {
             continue;
         }
 
-        std::thread(handle_client, new_socket).detach();
+        char buffer[128] = {0};
+
+        ssize_t bytes_received = recv(new_socket, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received <= 0) {
+            std::cerr << "Failed to read client type\n";
+            close(new_socket);
+            return 0;
+        }
+        
+        std::string node_type(buffer, bytes_received);
+
+        if (node_type.find("SLAVE") != std::string::npos) {
+            std::cout << "Server connection\n";
+            close(new_socket);
+            //handle_server(new_socket); TODO
+        } else if (node_type.find("CLIENT") != std::string::npos) {
+            std::cout << "Client connection\n";
+            close(new_socket);
+            //handle_client(new_socket); TODO
+        } else {
+            const char* err = "Unknown client type\n";
+            send(new_socket, err, strlen(err), 0);
+            close(new_socket);
+            std::cerr << "Unknown node type\n";
+        }
     }
 
     return 0;

@@ -12,7 +12,7 @@
 int main() {
     int sock = 0;
     struct sockaddr_in serv_addr;
-    const char* hello = "Hello from slave";
+    const char* hello = "SLAVE";
     char buffer[1024] = {0};
 
     // Create socket
